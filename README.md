@@ -5,7 +5,7 @@ collaborative knowledge base with chronological updates. The term, coined by War
 reverse chronological entries for quick updates while maintaining a wiki-like structure of linked pages 
 for more expanded content.  See [Martin Fowlers page](https://martinfowler.com/bliki/WhatIsaBliki.html).
 
-This is one I've whipped up to scartch the itch as a static site generator.  
+This is one I've whipped up to scratch the itch as a static site generator.  
 Posts are date-stamped entries; wiki pages are evergreen reference notes. The two link to each other 
 using `[[wiki link]]` syntax, and backlinks are tracked automatically so every page shows what else points to it.
 
