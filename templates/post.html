@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} - {{ site.name }}{% endblock %}
+{% block meta_description %}{{ page.summary }}{% endblock %}
+
+{% block content %}
+<article class="article">
+    <header>
+        <h1 class="article-title">{{ page.title }}</h1>
+        <div class="article-meta">
+            {% if page.date %}
+            <time datetime="{{ page.date.isoformat() }}">{{ page.date.strftime("%B %-d, %Y") }}</time>
+            {% endif %}
+            {% if page.category %}
+            &middot;
+            <a href="{{ page.category_url }}">{{ page.category }}</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="article-content">
+        {{ page.content_html | safe }}
+    </div>
+
+    {% if page.backlinks %}
+    <div class="backlinks">
+        <h2>Pages that link here</h2>
+        <ul>
+            {% for bl in page.backlinks %}
+            <li><a href="{{ bl.url }}">{{ bl.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</article>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Wiki - {{ site.name }}{% endblock %}
+
+{% block content %}
+<h1>Wiki</h1>
+
+{% if pages %}
+<div class="article-list">
+    {% for page in pages %}
+    <div class="article">
+        <h2 class="article-title">
+            <a href="{{ page.url }}">{{ page.title }}</a>
+        </h2>
+        <div class="article-meta">
+            {% if page.category %}
+            <a href="{{ page.category_url }}">{{ page.category }}</a>
+            {% endif %}
+        </div>
+        {% if page.summary %}
+        <p>{{ page.summary }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No wiki pages yet.</p>
+{% endif %}
+{% endblock %}

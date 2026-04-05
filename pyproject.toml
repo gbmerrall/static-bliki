@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bliki"
+version = "0.1.0"
+description = "A bliki is a hybrid website combining blog-style chronological posts with a wiki's linked, evergreen reference pages"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.3.1",
+    "jinja2>=3.1.6",
+    "livereload>=2.7.1",
+    "markdown>=3.10.2",
+    "pillow>=12.2.0",
+    "pygments>=2.20.0",
+    "python-frontmatter>=1.1.0",
+    "pyyaml>=6.0.3",
+]
+
+[project.scripts]
+bliki = "bliki.cli:cli"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
+]

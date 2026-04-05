@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category }} - {{ site.name }}{% endblock %}
+
+{% block content %}
+<h1>{{ category }}</h1>
+
+{% if pages %}
+<div class="article-list">
+    {% for page in pages %}
+    <div class="article">
+        <h2 class="article-title">
+            <a href="{{ page.url }}">{{ page.title }}</a>
+            {% if page.page_type.value == "wiki" %}
+            <span class="page-type-badge wiki">wiki</span>
+            {% else %}
+            <span class="page-type-badge post">post</span>
+            {% endif %}
+        </h2>
+        <div class="article-meta">
+            {% if page.date %}
+            <time datetime="{{ page.date.isoformat() }}">{{ page.date.strftime("%B %-d, %Y") }}</time>
+            {% endif %}
+        </div>
+        {% if page.summary %}
+        <p>{{ page.summary }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No pages in this category.</p>
+{% endif %}
+{% endblock %}

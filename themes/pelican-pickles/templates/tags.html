@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Tags - {{ SITENAME }}{% endblock %}
+
+{% block content %}
+    <h1>Tags</h1>
+    
+    <div class="tags-cloud">
+        {% for tag, articles in tags|sort %}
+        <a href="{{ SITEURL }}/{{ tag.url }}" class="tag-cloud-item tag-{{ articles|length }}">
+            {{ tag }} <span class="article-count">({{ articles|length }})</span>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="tags-list">
+        {% for tag, articles in tags|sort %}
+        <div class="tag-item">
+            <h2 class="tag-title">
+                <a href="{{ SITEURL }}/{{ tag.url }}">{{ tag }}</a>
+                <span class="article-count">({{ articles|length }})</span>
+            </h2>
+            
+            <div class="tag-articles">
+                {% for article in articles[:5] %}
+                <article class="tag-article">
+                    <h3 class="article-title">
+                        <a href="{{ SITEURL }}/{{ article.url }}">{{ article.title }}</a>
+                    </h3>
+                    <div class="article-meta">
+                        <time datetime="{{ article.date.isoformat() }}">{{ article.locale_date }}</time>
+                        {% if article.category %}
+                        <span class="category">
+                            <a href="{{ SITEURL }}/{{ article.category.url }}">{{ article.category }}</a>
+                        </span>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+                
+                {% if articles|length > 5 %}
+                <div class="tag-more">
+                    <a href="{{ SITEURL }}/{{ tag.url }}">View all {{ articles|length }} articles →</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %} 

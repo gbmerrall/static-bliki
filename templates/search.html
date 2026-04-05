@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Search - {{ site.name }}{% endblock %}
+
+{% block content %}
+<h1>Search</h1>
+
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet">
+<script src="/pagefind/pagefind-ui.js"></script>
+<div id="pagefind-ui"></div>
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        new PagefindUI({ element: '#pagefind-ui', showSubResults: true });
+    });
+</script>
+{% endblock %}

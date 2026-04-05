@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - {{ site.name }}{% endblock %}
+
+{% block content %}
+<h1>Categories</h1>
+
+{% if categories %}
+<div class="categories-list">
+    {% for cat in categories %}
+    <div class="category-item">
+        <h2 class="category-title">
+            <a href="/categories/{{ cat.slug }}/">{{ cat.name }}</a>
+            <span class="article-count">({{ cat.pages | length }})</span>
+        </h2>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No categories yet.</p>
+{% endif %}
+{% endblock %}
