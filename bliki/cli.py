@@ -92,6 +92,7 @@ def serve(drafts, port, content, templates, output, config):
     server = Server()
     server.watch(str(content_dir), rebuild)
     server.watch(str(templates_dir), rebuild)
+    server.watch(config, rebuild)
     server.serve(root=str(output_dir), port=port)
 
 

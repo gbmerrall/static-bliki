@@ -106,6 +106,31 @@ def test_serve_passes_drafts_flag_to_build(tmp_path):
     assert kwargs.get("include_drafts") is True
 
 
+def test_serve_watches_config_file(tmp_path):
+    """serve watches the config file so edits to bliki.yaml trigger a rebuild."""
+    from unittest.mock import MagicMock, patch
+
+    config_path = tmp_path / "bliki.yaml"
+    config_path.write_text("name: Test\n")
+
+    mock_server = MagicMock()
+    with patch("bliki.cli.build_site"), \
+         patch("livereload.Server") as mock_server_cls:
+        mock_server_cls.return_value = mock_server
+
+        runner = CliRunner()
+        runner.invoke(cli, [
+            "serve",
+            "--content", str(tmp_path),
+            "--templates", str(tmp_path),
+            "--output", str(tmp_path),
+            "--config", str(config_path),
+        ])
+
+    watched = [call.args[0] for call in mock_server.watch.call_args_list]
+    assert str(config_path) in watched
+
+
 def test_new_post_slug_from_title(tmp_path):
     """Post directory name is derived from the title slug and today's date."""
     content_dir = tmp_path / "content"
