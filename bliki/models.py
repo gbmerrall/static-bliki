@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import datetime
 import enum
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
+
+# Leading YYYY-MM-DD- prefix conventionally present on post directory names.
+_DATE_PREFIX = re.compile(r"^\d{4}-\d{2}-\d{2}-")
 
 
 class PageType(enum.Enum):
@@ -61,19 +65,19 @@ class Page:
     def url(self) -> str:
         """Generate the URL path for this page.
 
+        The frontmatter date is the canonical publish date and drives the
+        year/month in a post's URL. Any leading YYYY-MM-DD- prefix on the
+        directory name is stripped to form the URL slug, so the directory prefix
+        and the frontmatter date do not have to stay in lock-step (editing one
+        without the other no longer breaks the build).
+
         Raises:
-            ValueError: If a POST page has no date, or if the slug does not
-                start with the expected YYYY-MM-DD- date prefix.
+            ValueError: If a POST page has no date.
         """
         if self.page_type == PageType.POST:
             if not self.date:
                 raise ValueError(f"Post '{self.title}' has no date")
-            date_prefix = self.date.isoformat() + "-"
-            if not self.slug.startswith(date_prefix):
-                raise ValueError(
-                    f"Post slug '{self.slug}' must start with date prefix '{date_prefix}'"
-                )
-            name = self.slug[len(date_prefix):]
+            name = _DATE_PREFIX.sub("", self.slug)
             return f"/posts/{self.date.year:04d}/{self.date.month:02d}/{name}/"
         return f"/wiki/{self.slug}/"
 

@@ -145,18 +145,32 @@ def test_post_url_without_date_raises():
         _ = page.url
 
 
-def test_post_url_with_malformed_slug_raises():
-    """Post whose slug doesn't start with YYYY-MM-DD- raises ValueError."""
+def test_post_url_without_date_prefix_uses_full_slug():
+    """A post directory with no YYYY-MM-DD- prefix uses the whole slug as the name
+    instead of crashing."""
     page = Page(
-        title="Bad Slug Post",
+        title="No Prefix Post",
         slug="no-date-prefix",
         page_type=PageType.POST,
         source_dir=Path("/tmp"),
         content_md="",
         date=datetime.date(2026, 2, 22),
     )
-    with pytest.raises(ValueError, match="slug"):
-        _ = page.url
+    assert page.url == "/posts/2026/02/no-date-prefix/"
+
+
+def test_post_url_follows_frontmatter_date_when_dir_prefix_differs():
+    """The URL follows the frontmatter date; a stale directory date prefix is
+    stripped rather than causing a crash."""
+    page = Page(
+        title="Re-dated Post",
+        slug="2026-02-22-hello-world",
+        page_type=PageType.POST,
+        source_dir=Path("/tmp"),
+        content_md="",
+        date=datetime.date(2026, 3, 1),
+    )
+    assert page.url == "/posts/2026/03/hello-world/"
 
 
 def test_scan_content_with_only_posts_dir(tmp_path):
