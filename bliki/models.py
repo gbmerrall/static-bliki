@@ -76,3 +76,13 @@ class Page:
             name = self.slug[len(date_prefix):]
             return f"/posts/{self.date.year:04d}/{self.date.month:02d}/{name}/"
         return f"/wiki/{self.slug}/"
+
+    @property
+    def show_toc(self) -> bool:
+        """Whether to render a table of contents for this page.
+
+        True only when toc_html contains at least three heading entries. This
+        mirrors the previous client-side rule (minHeadings: 3) now that the TOC
+        is rendered server-side from the markdown TOC extension output.
+        """
+        return self.toc_html.count("<li") >= 3

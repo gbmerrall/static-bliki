@@ -5,59 +5,41 @@ import re
 from typing import TYPE_CHECKING
 
 import markdown
-from markdown.extensions.wikilinks import WikiLinkExtension
+
+from bliki.links import WIKI_LINK_PATTERN
 
 if TYPE_CHECKING:
     from bliki.links import PageRegistry
 
 logger = logging.getLogger(__name__)
 
-_DISPLAY_LINK_PATTERN = re.compile(r"\[\[([^\]|]+)\|([^\]]+)\]\]")
 
+def _resolve_wiki_links(text: str, registry: PageRegistry | None) -> str:
+    """Replace [[Target]] and [[Target|display]] wiki links before Markdown conversion.
 
-def _make_url_builder(registry: PageRegistry | None):
-    """Create a URL builder function for the wikilinks extension.
-
-    Args:
-        registry: Page registry for resolving titles to URLs.
-
-    Returns:
-        Callable that takes (label, base, end) and returns a URL string.
-    """
-    def build_url(label: str, _base: str, _end: str) -> str:
-        if registry:
-            url = registry.resolve(label)
-            if url:
-                return url
-        # Return a placeholder for broken links -- CSS class added via post-processing
-        return f"#broken:{label}"
-
-    return build_url
-
-
-def _preprocess_display_links(text: str, registry: PageRegistry | None) -> str:
-    """Replace [[Page|display text]] with markdown links before rendering.
-
-    The wikilinks extension doesn't support display text syntax, so we
-    pre-process these patterns into standard markdown links.
+    Resolution uses WIKI_LINK_PATTERN -- the same pattern backlink extraction uses --
+    so any link that produces a backlink also renders as a link, and vice versa.
+    Resolved links become Markdown links; unresolved links become anchors flagged
+    with class="broken-link" and an href of "#broken:<target>" so the builder can
+    warn about them.
 
     Args:
         text: Markdown source text.
-        registry: Page registry for URL resolution.
+        registry: Page registry for URL resolution. None resolves nothing (every
+            link is treated as broken).
 
     Returns:
-        Text with display-text wiki links converted to markdown links.
+        Text with wiki links converted, ready for Markdown conversion.
     """
     def replace(match: re.Match) -> str:
         target = match.group(1).strip()
-        display = match.group(2).strip()
-        if registry:
-            url = registry.resolve(target)
-            if url:
-                return f"[{display}]({url})"
-        return f'<a href="#broken:{target}">{display}</a>'
+        display = (match.group(2) or match.group(1)).strip()
+        url = registry.resolve(target) if registry else None
+        if url:
+            return f"[{display}]({url})"
+        return f'<a class="broken-link" href="#broken:{target}">{display}</a>'
 
-    return _DISPLAY_LINK_PATTERN.sub(replace, text)
+    return WIKI_LINK_PATTERN.sub(replace, text)
 
 
 class Renderer:
@@ -77,11 +59,6 @@ class Renderer:
             "fenced_code",
             "codehilite",
             "tables",
-            WikiLinkExtension(
-                base_url="",
-                end_url="",
-                build_url=_make_url_builder(self._registry),
-            ),
             "toc",
         ]
         extension_configs = {
@@ -108,18 +85,9 @@ class Renderer:
             Tuple of (content_html, toc_html).
         """
         self._md.reset()
-        text = _preprocess_display_links(text, self._registry)
+        text = _resolve_wiki_links(text, self._registry)
         html = self._md.convert(text)
         toc = getattr(self._md, "toc", "")
-        # Post-process broken links: add CSS class.
-        # The wikilinks extension generates class="wikilink" on its anchors, so merge
-        # broken-link into that attribute rather than emitting a duplicate class attr.
-        html = html.replace(
-            'class="wikilink" href="#broken:',
-            'class="wikilink broken-link" href="#broken:',
-        )
-        # Display-text broken links (from _preprocess_display_links) have no class attr.
-        html = html.replace('<a href="#broken:', '<a class="broken-link" href="#broken:')
         return html, toc
 
 

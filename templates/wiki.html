@@ -17,6 +17,13 @@
         </div>
     </header>
 
+    {% if page.show_toc %}
+    <nav class="table-of-contents">
+        <h2 class="toc-title">Table of Contents</h2>
+        {{ page.toc_html | safe }}
+    </nav>
+    {% endif %}
+
     <div class="article-content">
         {{ page.content_html | safe }}
     </div>

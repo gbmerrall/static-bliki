@@ -5,12 +5,7 @@ const config = {
     // Reading progress bar color
     progressBarColor: '#2563eb',
     // Back to top button threshold
-    backToTopThreshold: 300,
-    // Table of contents settings
-    toc: {
-        minHeadings: 3,
-        container: '#table-of-contents'
-    }
+    backToTopThreshold: 300
 };
 
 // Mobile Navigation
@@ -165,62 +160,6 @@ class ImageHandler {
     }
 }
 
-// Table of Contents
-class TableOfContents {
-    constructor() {
-        this.init();
-    }
-
-    init() {
-        const article = document.querySelector('article');
-        if (!article) return;
-
-        const headings = article.querySelectorAll('h2, h3, h4');
-        if (headings.length < config.toc.minHeadings) return;
-
-        const toc = document.createElement('nav');
-        toc.id = config.toc.container.substring(1);
-        toc.className = 'table-of-contents';
-        
-        // Add TOC title
-        const tocTitle = document.createElement('h2');
-        tocTitle.className = 'toc-title';
-        tocTitle.textContent = 'Table of Contents';
-        toc.appendChild(tocTitle);
-        
-        const tocList = document.createElement('ul');
-        headings.forEach(heading => {
-            const li = document.createElement('li');
-            li.className = `toc-${heading.tagName.toLowerCase()}`;
-            const a = document.createElement('a');
-            a.textContent = heading.textContent;
-            a.href = `#${heading.id}`;
-            a.addEventListener('click', (e) => {
-                e.preventDefault();
-                heading.scrollIntoView({ behavior: 'smooth' });
-            });
-            li.appendChild(a);
-            tocList.appendChild(li);
-        });
-
-        toc.appendChild(tocList);
-
-        // Insert TOC after the article header (which contains title and date)
-        const articleHeader = article.querySelector('header');
-        if (articleHeader) {
-            articleHeader.parentNode.insertBefore(toc, articleHeader.nextSibling);
-        } else {
-            // Fallback to inserting after the article title if no header found
-            const articleTitle = article.querySelector('.article-title');
-            if (articleTitle) {
-                articleTitle.parentNode.insertBefore(toc, articleTitle.nextSibling);
-            } else {
-                article.insertBefore(toc, article.firstChild);
-            }
-        }
-    }
-}
-
 // Back to Top Button
 class BackToTop {
     constructor() {
@@ -324,7 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
     new ReadingProgress();
     new CodeBlocks();
     new ImageHandler();
-    new TableOfContents();
     new BackToTop();
     new ThemeToggle();
     new ShareButtons();

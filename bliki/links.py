@@ -7,7 +7,10 @@ from bliki.models import Page
 
 logger = logging.getLogger(__name__)
 
-WIKI_LINK_PATTERN = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
+# Single source of truth for what counts as a wiki link. Group 1 is the target
+# title; group 2 (optional) is the display text. The renderer imports this same
+# pattern so that link rendering and backlink extraction always agree.
+WIKI_LINK_PATTERN = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 
 
 def extract_wiki_links(text: str) -> list[str]:
@@ -22,7 +25,7 @@ def extract_wiki_links(text: str) -> list[str]:
     Returns:
         List of page name targets found in the text.
     """
-    return WIKI_LINK_PATTERN.findall(text)
+    return [target.strip() for target, _display in WIKI_LINK_PATTERN.findall(text)]
 
 
 class PageRegistry:
@@ -67,8 +70,13 @@ def build_backlinks(pages: list[Page]) -> dict[str, list[Page]]:
         Dict mapping page titles to list of pages that link to them.
     """
     backlinks: dict[str, list[Page]] = {}
+    seen_ids: dict[str, set[int]] = {}
     for page in pages:
-        targets = extract_wiki_links(page.content_md)
-        for target in targets:
-            backlinks.setdefault(target.lower(), []).append(page)
+        for target in extract_wiki_links(page.content_md):
+            key = target.lower()
+            ids = seen_ids.setdefault(key, set())
+            # A page that links the same target more than once is a single backlink.
+            if id(page) not in ids:
+                ids.add(id(page))
+                backlinks.setdefault(key, []).append(page)
     return backlinks

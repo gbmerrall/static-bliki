@@ -71,3 +71,20 @@ def test_build_backlinks_normalizes_target_case():
     backlinks = build_backlinks([source])
     python_keys = [k for k in backlinks if k.lower() == "python"]
     assert len(python_keys) == 1, f"Expected one key, got: {python_keys}"
+
+
+def test_build_backlinks_dedupes_repeated_links_from_same_page():
+    """A page that links the same target twice appears only once in its backlinks."""
+    from pathlib import Path
+
+    from bliki.models import Page, PageType
+
+    source = Page(
+        title="Source",
+        slug="source",
+        page_type=PageType.WIKI,
+        source_dir=Path("/tmp"),
+        content_md="See [[Python]] and again [[Python]].",
+    )
+    backlinks = build_backlinks([source])
+    assert len(backlinks["python"]) == 1

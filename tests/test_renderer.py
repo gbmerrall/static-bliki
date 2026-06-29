@@ -60,3 +60,36 @@ def test_render_broken_display_link_class_appears_once(content_dir):
     assert 'class="broken-link"' in html
     assert html.count('class="broken-link"') == 1
     assert "click here</a>" in html
+
+
+def test_render_wiki_link_with_punctuation_in_title():
+    """A wiki link to a title with punctuation (e.g. 'Node.js') renders as a link.
+
+    Backlink extraction and link rendering must recognize the same set of titles;
+    previously the renderer's markdown extension matched a narrower pattern, so
+    [[Node.js]] was left as raw text even though it created a backlink.
+    """
+    from pathlib import Path
+
+    from bliki.models import Page, PageType
+
+    target = Page(
+        title="Node.js",
+        slug="node-js",
+        page_type=PageType.WIKI,
+        source_dir=Path("/tmp"),
+        content_md="",
+    )
+    registry = PageRegistry([target])
+    html, _ = render_markdown("Learn [[Node.js]] today.", registry=registry)
+    assert 'href="/wiki/node-js/"' in html
+    assert "Node.js</a>" in html
+    assert "[[Node.js]]" not in html
+
+
+def test_render_broken_wiki_link_with_punctuation():
+    """A broken wiki link with punctuation is flagged, not left as raw [[...]] markup."""
+    registry = PageRegistry([])
+    html, _ = render_markdown("See [[Node.js]] here.", registry=registry)
+    assert "broken-link" in html
+    assert "[[Node.js]]" not in html
