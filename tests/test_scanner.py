@@ -8,8 +8,8 @@ from bliki.scanner import scan_content
 
 
 def test_scan_finds_all_pages(content_dir):
-    """Scanner finds posts and wiki pages."""
-    pages = scan_content(content_dir)
+    """Scanner finds posts and wiki pages, including drafts when requested."""
+    pages = scan_content(content_dir, include_drafts=True)
     titles = {p.title for p in pages}
     assert "First Post" in titles
     assert "Draft Post" in titles
@@ -35,8 +35,8 @@ def test_scan_parses_front_matter(content_dir):
 
 
 def test_scan_excludes_drafts_by_default(content_dir):
-    """Scanner excludes drafts unless include_drafts=True."""
-    pages = scan_content(content_dir, include_drafts=False)
+    """Scanner excludes drafts by default, matching build_site's default."""
+    pages = scan_content(content_dir)
     titles = {p.title for p in pages}
     assert "Draft Post" not in titles
 

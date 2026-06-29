@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def scan_content(
     content_dir: Path,
-    include_drafts: bool = True,
+    include_drafts: bool = False,
 ) -> list[Page]:
     """Scan content directory and return a list of Page objects.
 
