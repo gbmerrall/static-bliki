@@ -131,6 +131,20 @@ def test_page_category_url_slugifies_spaces():
     assert page.category_url == "/categories/web-development/"
 
 
+def test_page_category_url_is_url_safe_for_punctuated_names():
+    """Category URLs are formed with the same robust slugify as content slugs, so
+    punctuation and irregular whitespace produce a clean, URL-safe slug."""
+    page = Page(
+        title="Test",
+        slug="test",
+        page_type=PageType.WIKI,
+        source_dir=Path("/tmp"),
+        content_md="",
+        category="C++ & Rust",
+    )
+    assert page.category_url == "/categories/c-rust/"
+
+
 def test_post_url_without_date_raises():
     """Post with no date raises ValueError rather than silently returning a wiki URL."""
     page = Page(

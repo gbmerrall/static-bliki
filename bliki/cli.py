@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import datetime
-import re
 from pathlib import Path
 
 import click
 
 from bliki.builder import build_site
 from bliki.config import SiteConfig, load_config
+from bliki.models import slugify
 
 
 def _site_options(f):
@@ -113,7 +113,7 @@ def new():
 def new_post(title, content):
     """Create a new blog post."""
     today = datetime.date.today().isoformat()
-    slug = _slugify(title)
+    slug = slugify(title)
     post_dir = Path(content) / "posts" / f"{today}-{slug}"
     post_dir.mkdir(parents=True, exist_ok=True)
     index_md = post_dir / "index.md"
@@ -140,7 +140,7 @@ def new_post(title, content):
 )
 def new_wiki(title, content):
     """Create a new wiki page."""
-    slug = _slugify(title)
+    slug = slugify(title)
     wiki_dir = Path(content) / "wiki" / slug
     wiki_dir.mkdir(parents=True, exist_ok=True)
     index_md = wiki_dir / "index.md"
@@ -167,22 +167,6 @@ def _load_config_or_default(config_path: str) -> SiteConfig:
     if path.exists():
         return load_config(path)
     return SiteConfig()
-
-
-def _slugify(title: str) -> str:
-    """Convert a title to a URL-safe slug.
-
-    Args:
-        title: Human-readable title string.
-
-    Returns:
-        Lowercase, hyphen-separated slug with non-alphanumeric chars removed.
-    """
-    slug = title.lower()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s_]+", "-", slug)
-    slug = slug.strip("-")
-    return slug
 
 
 if __name__ == "__main__":

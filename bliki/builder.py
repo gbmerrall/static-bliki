@@ -14,7 +14,7 @@ from bliki.config import SiteConfig
 from bliki.feed import generate_rss
 from bliki.images import process_images, rewrite_img_tags
 from bliki.links import PageRegistry, build_backlinks
-from bliki.models import Page, PageType, slugify_category
+from bliki.models import Page, PageType, slugify
 from bliki.renderer import Renderer
 from bliki.scanner import scan_content
 
@@ -224,7 +224,7 @@ def _render_indexes(
             categories_map[page.category].append(page)
 
     categories = [
-        Category(name=name, slug=slugify_category(name), pages=cat_pages)
+        Category(name=name, slug=slugify(name), pages=cat_pages)
         for name, cat_pages in sorted(categories_map.items())
     ]
 

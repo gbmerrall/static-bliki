@@ -15,16 +15,25 @@ class PageType(enum.Enum):
     WIKI = "wiki"
 
 
-def slugify_category(name: str) -> str:
-    """Convert a category name to a URL slug.
+def slugify(text: str) -> str:
+    """Convert human-readable text to a URL-safe slug.
+
+    Lowercases, removes characters that are not letters, digits, whitespace or
+    hyphens, collapses runs of whitespace and underscores into single hyphens,
+    and trims leading/trailing hyphens. Used for both content directory names
+    (via the new command) and category URLs so slugs are always formed the same
+    way.
 
     Args:
-        name: Human-readable category name.
+        text: Human-readable string (a title or category name).
 
     Returns:
-        Lowercase slug with spaces replaced by hyphens.
+        URL-safe slug. May be empty if text has no slug-able characters.
     """
-    return name.lower().replace(" ", "-")
+    slug = text.lower()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    return slug.strip("-")
 
 
 @dataclass
@@ -59,7 +68,7 @@ class Page:
         """Return the URL path for this page's category, or empty string if none."""
         if not self.category:
             return ""
-        return f"/categories/{slugify_category(self.category)}/"
+        return f"/categories/{slugify(self.category)}/"
 
     @property
     def url(self) -> str:

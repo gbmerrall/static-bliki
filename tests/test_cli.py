@@ -1,6 +1,7 @@
 from click.testing import CliRunner
 
-from bliki.cli import _slugify, cli
+from bliki.cli import cli
+from bliki.models import slugify
 from tests.conftest import create_minimal_templates
 
 
@@ -151,35 +152,35 @@ def test_new_post_slug_from_title(tmp_path):
     assert len(parts[0]) == 4 and parts[0].isdigit()
 
 
-# --- _slugify unit tests ---
+# --- slugify unit tests ---
 
 def test_slugify_basic():
-    assert _slugify("Hello World") == "hello-world"
+    assert slugify("Hello World") == "hello-world"
 
 
 def test_slugify_already_lowercase():
-    assert _slugify("python tips") == "python-tips"
+    assert slugify("python tips") == "python-tips"
 
 
 def test_slugify_strips_special_chars():
-    assert _slugify("What's New?") == "whats-new"
+    assert slugify("What's New?") == "whats-new"
 
 
 def test_slugify_collapses_multiple_spaces():
-    assert _slugify("too   many   spaces") == "too-many-spaces"
+    assert slugify("too   many   spaces") == "too-many-spaces"
 
 
 def test_slugify_replaces_underscores():
-    assert _slugify("snake_case_title") == "snake-case-title"
+    assert slugify("snake_case_title") == "snake-case-title"
 
 
 def test_slugify_strips_leading_trailing_hyphens():
-    assert _slugify("-leading and trailing-") == "leading-and-trailing"
+    assert slugify("-leading and trailing-") == "leading-and-trailing"
 
 
 def test_slugify_numbers_preserved():
-    assert _slugify("Python 3.12 Release") == "python-312-release"
+    assert slugify("Python 3.12 Release") == "python-312-release"
 
 
 def test_slugify_empty_string():
-    assert _slugify("") == ""
+    assert slugify("") == ""
