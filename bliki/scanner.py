@@ -62,22 +62,28 @@ def _load_page(page_dir: Path, page_type: PageType) -> Page | None:
         logger.debug(f"Skipping {page_dir.name}: no index.md found")
         return None
 
-    post = frontmatter.load(index_file)
+    # Isolate per-file parse failures (malformed frontmatter, bad date) so one
+    # broken page is skipped with an error rather than aborting the whole scan.
+    try:
+        post = frontmatter.load(index_file)
 
-    date = post.get("date")
-    if isinstance(date, str):
-        date = datetime.date.fromisoformat(date)
-    elif isinstance(date, datetime.datetime):
-        date = date.date()
+        date = post.get("date")
+        if isinstance(date, str):
+            date = datetime.date.fromisoformat(date)
+        elif isinstance(date, datetime.datetime):
+            date = date.date()
 
-    return Page(
-        title=post.get("title", page_dir.name),
-        slug=page_dir.name,
-        page_type=page_type,
-        source_dir=page_dir,
-        content_md=post.content,
-        category=post.get("category", ""),
-        summary=post.get("summary", ""),
-        date=date,
-        draft=post.get("draft", False),
-    )
+        return Page(
+            title=post.get("title", page_dir.name),
+            slug=page_dir.name,
+            page_type=page_type,
+            source_dir=page_dir,
+            content_md=post.content,
+            category=post.get("category", ""),
+            summary=post.get("summary", ""),
+            date=date,
+            draft=post.get("draft", False),
+        )
+    except Exception as exc:
+        logger.error(f"Skipping {page_dir}: failed to load index.md: {exc}")
+        return None

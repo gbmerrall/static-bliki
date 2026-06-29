@@ -187,6 +187,59 @@ def test_post_url_follows_frontmatter_date_when_dir_prefix_differs():
     assert page.url == "/posts/2026/03/hello-world/"
 
 
+def test_scan_skips_page_with_malformed_frontmatter(tmp_path, caplog):
+    """A page whose frontmatter fails to parse is skipped with an error log, and
+    the rest of the content still scans (one bad file does not abort the build)."""
+    import logging
+
+    good_dir = tmp_path / "posts" / "2026-01-01-good-post"
+    good_dir.mkdir(parents=True)
+    (good_dir / "index.md").write_text(
+        "---\ntitle: Good Post\ndate: 2026-01-01\n---\nContent.\n"
+    )
+
+    bad_dir = tmp_path / "posts" / "2026-01-01-bad-post"
+    bad_dir.mkdir(parents=True)
+    # Unterminated quote makes the YAML frontmatter unparseable.
+    (bad_dir / "index.md").write_text(
+        '---\ntitle: "Bad Post\ndate: 2026-01-01\n---\nContent.\n'
+    )
+
+    with caplog.at_level(logging.ERROR, logger="bliki.scanner"):
+        pages = scan_content(tmp_path, include_drafts=True)
+
+    titles = {p.title for p in pages}
+    assert "Good Post" in titles
+    assert "Bad Post" not in titles
+    assert "2026-01-01-bad-post" in caplog.text
+
+
+def test_scan_skips_page_with_invalid_date(tmp_path, caplog):
+    """A page with an unparseable date is skipped with an error log rather than
+    raising and aborting the scan."""
+    import logging
+
+    good_dir = tmp_path / "posts" / "2026-01-01-good-post"
+    good_dir.mkdir(parents=True)
+    (good_dir / "index.md").write_text(
+        "---\ntitle: Good Post\ndate: 2026-01-01\n---\nContent.\n"
+    )
+
+    bad_dir = tmp_path / "posts" / "2026-01-01-bad-date"
+    bad_dir.mkdir(parents=True)
+    (bad_dir / "index.md").write_text(
+        "---\ntitle: Bad Date\ndate: not-a-real-date\n---\nContent.\n"
+    )
+
+    with caplog.at_level(logging.ERROR, logger="bliki.scanner"):
+        pages = scan_content(tmp_path, include_drafts=True)
+
+    titles = {p.title for p in pages}
+    assert "Good Post" in titles
+    assert "Bad Date" not in titles
+    assert "2026-01-01-bad-date" in caplog.text
+
+
 def test_scan_content_with_only_posts_dir(tmp_path):
     """scan_content works when only posts/ exists (no wiki/ directory)."""
     posts_dir = tmp_path / "posts" / "2026-02-22-solo-post"
