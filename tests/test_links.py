@@ -73,6 +73,63 @@ def test_build_backlinks_normalizes_target_case():
     assert len(python_keys) == 1, f"Expected one key, got: {python_keys}"
 
 
+def test_page_registry_warns_on_title_collision(caplog):
+    """Two pages whose titles collide case-insensitively produce a warning naming
+    both source locations, instead of the second silently overwriting the first."""
+    import logging
+    from pathlib import Path
+
+    from bliki.models import Page, PageType
+
+    first = Page(
+        title="Python",
+        slug="python",
+        page_type=PageType.WIKI,
+        source_dir=Path("/content/wiki/python"),
+        content_md="",
+    )
+    second = Page(
+        title="python",  # same title, different case
+        slug="python-lang",
+        page_type=PageType.WIKI,
+        source_dir=Path("/content/wiki/python-lang"),
+        content_md="",
+    )
+
+    with caplog.at_level(logging.WARNING, logger="bliki.links"):
+        PageRegistry([first, second])
+
+    # The warning must name both colliding locations so the user can fix it.
+    assert "/content/wiki/python" in caplog.text
+    assert "/content/wiki/python-lang" in caplog.text
+
+
+def test_page_registry_collision_keeps_first_page():
+    """On a title collision the first registered page wins deterministically, so
+    link resolution does not depend on scan order."""
+    from pathlib import Path
+
+    from bliki.models import Page, PageType
+
+    first = Page(
+        title="Python",
+        slug="python",
+        page_type=PageType.WIKI,
+        source_dir=Path("/content/wiki/python"),
+        content_md="",
+    )
+    second = Page(
+        title="python",
+        slug="python-lang",
+        page_type=PageType.WIKI,
+        source_dir=Path("/content/wiki/python-lang"),
+        content_md="",
+    )
+
+    registry = PageRegistry([first, second])
+    assert registry.get_page("Python") is first
+
+
 def test_build_backlinks_dedupes_repeated_links_from_same_page():
     """A page that links the same target twice appears only once in its backlinks."""
     from pathlib import Path

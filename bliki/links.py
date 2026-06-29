@@ -34,7 +34,17 @@ class PageRegistry:
     def __init__(self, pages: list[Page]) -> None:
         self._by_title: dict[str, Page] = {}
         for page in pages:
-            self._by_title[page.title.lower()] = page
+            key = page.title.lower()
+            existing = self._by_title.get(key)
+            if existing is not None:
+                # Two pages share a title (case-insensitively). Keep the first so
+                # resolution is deterministic, and warn so the duplicate is fixed.
+                logger.warning(
+                    f"Duplicate page title '{page.title}': keeping "
+                    f"'{existing.source_dir}', ignoring '{page.source_dir}'"
+                )
+                continue
+            self._by_title[key] = page
 
     def resolve(self, title: str) -> str | None:
         """Resolve a page title to its URL.
