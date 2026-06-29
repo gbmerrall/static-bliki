@@ -116,3 +116,55 @@ def test_build_broken_wiki_link_has_css_class(content_dir, tmp_path):
     ).read_text()
     assert "broken-link" in post_html
     assert "Nonexistent Page" in post_html
+
+
+def test_build_prunes_orphaned_output_but_keeps_user_files(content_dir, tmp_path):
+    """A second build removes stale generated files but preserves user-managed
+    files placed in the output directory (e.g. CNAME, .nojekyll)."""
+    templates_dir = tmp_path / "templates"
+    create_minimal_templates(templates_dir)
+    output_dir = tmp_path / "output"
+
+    build_site(
+        content_dir=content_dir,
+        output_dir=output_dir,
+        templates_dir=templates_dir,
+        include_drafts=False,
+    )
+
+    # Simulate an orphan left by a previous build (a post that no longer exists)
+    # and a user-managed deployment file.
+    orphan = output_dir / "posts" / "1999" / "12" / "ghost" / "index.html"
+    orphan.parent.mkdir(parents=True, exist_ok=True)
+    orphan.write_text("stale")
+    cname = output_dir / "CNAME"
+    cname.write_text("example.com")
+
+    build_site(
+        content_dir=content_dir,
+        output_dir=output_dir,
+        templates_dir=templates_dir,
+        include_drafts=False,
+    )
+
+    assert not orphan.exists(), "stale generated file should be pruned"
+    assert cname.exists(), "user-managed file should be preserved"
+    assert cname.read_text() == "example.com"
+    # Real content is still produced after cleaning.
+    assert (output_dir / "posts" / "2026" / "02" / "first-post" / "index.html").exists()
+
+
+def test_build_refuses_to_clean_a_source_directory(content_dir, tmp_path):
+    """Pointing output at a source directory is refused, not silently destructive."""
+    templates_dir = tmp_path / "templates"
+    create_minimal_templates(templates_dir)
+
+    with pytest.raises(ValueError):
+        build_site(
+            content_dir=content_dir,
+            output_dir=content_dir,
+            templates_dir=templates_dir,
+            include_drafts=False,
+        )
+    # Source content must remain intact.
+    assert (content_dir / "posts").exists()

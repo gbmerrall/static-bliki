@@ -20,6 +20,20 @@ from bliki.scanner import scan_content
 
 logger = logging.getLogger(__name__)
 
+# Top-level entries the builder generates. Cleaning is scoped to these so that
+# renamed/deleted pages don't leave orphans, while user-managed files in the
+# output directory (e.g. CNAME, .nojekyll) are preserved across builds.
+GENERATED_OUTPUTS = (
+    "posts",
+    "wiki",
+    "categories",
+    "search",
+    "static",
+    "pagefind",
+    "index.html",
+    "feed.xml",
+)
+
 
 @dataclass
 class Category:
@@ -48,6 +62,9 @@ def build_site(
     """
     if config is None:
         config = SiteConfig()
+
+    # Step 0: Remove stale output from a previous build before writing anything.
+    _clean_output(output_dir, protected=[content_dir, templates_dir])
 
     # Step 1: Scan content
     pages = scan_content(content_dir, include_drafts=include_drafts)
@@ -105,6 +122,40 @@ def build_site(
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "feed.xml").write_text(feed_xml)
+
+
+def _clean_output(output_dir: Path, protected: list[Path]) -> None:
+    """Remove builder-generated entries from a previous build.
+
+    Only the entries in GENERATED_OUTPUTS are removed, so files the user placed
+    in the output directory (e.g. CNAME, .nojekyll) survive across builds.
+
+    Args:
+        output_dir: Root output directory.
+        protected: Source directories that must never be cleaned. If output_dir
+            resolves to any of them, cleaning is refused to avoid destroying
+            source content.
+
+    Raises:
+        ValueError: If output_dir resolves to one of the protected directories.
+    """
+    if not output_dir.exists():
+        return
+
+    resolved_output = output_dir.resolve()
+    for protected_dir in protected:
+        if resolved_output == protected_dir.resolve():
+            raise ValueError(
+                f"Refusing to clean output dir '{output_dir}': it resolves to a "
+                f"source directory ('{protected_dir}')"
+            )
+
+    for name in GENERATED_OUTPUTS:
+        target = output_dir / name
+        if target.is_dir():
+            shutil.rmtree(target)
+        elif target.exists():
+            target.unlink()
 
 
 def _warn_broken_links(page: Page) -> None:
