@@ -65,24 +65,28 @@ def _load_page(page_dir: Path, page_type: PageType) -> Page | None:
     # Isolate per-file parse failures (malformed frontmatter, bad date) so one
     # broken page is skipped with an error rather than aborting the whole scan.
     try:
-        post = frontmatter.load(index_file)
+        post = frontmatter.load(str(index_file))
 
-        date = post.get("date")
-        if isinstance(date, str):
-            date = datetime.date.fromisoformat(date)
-        elif isinstance(date, datetime.datetime):
-            date = date.date()
+        raw_date = post.get("date")
+        date: datetime.date | None = None
+        if isinstance(raw_date, datetime.datetime):
+            # datetime subclasses date, so check it first and drop the time part.
+            date = raw_date.date()
+        elif isinstance(raw_date, datetime.date):
+            date = raw_date
+        elif isinstance(raw_date, str):
+            date = datetime.date.fromisoformat(raw_date)
 
         return Page(
-            title=post.get("title", page_dir.name),
+            title=str(post.get("title", page_dir.name)),
             slug=page_dir.name,
             page_type=page_type,
             source_dir=page_dir,
             content_md=post.content,
-            category=post.get("category", ""),
-            summary=post.get("summary", ""),
+            category=str(post.get("category", "")),
+            summary=str(post.get("summary", "")),
             date=date,
-            draft=post.get("draft", False),
+            draft=bool(post.get("draft", False)),
         )
     except Exception as exc:
         logger.error(f"Skipping {page_dir}: failed to load index.md: {exc}")
